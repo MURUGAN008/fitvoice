@@ -97,6 +97,17 @@ export interface WorkoutExercise {
   rest_seconds: number;
 }
 
+export interface CustomWorkoutPlan {
+  id: string;
+  name: string;
+  exercises: {
+    id: string;
+    duration: number; // in seconds
+  }[];
+  restDuration?: number;
+  createdAt: string;
+}
+
 export interface WorkoutSession {
   id: string;
   user_id: string;
@@ -189,6 +200,29 @@ export interface GroqResponse {
   action: string | null;
 }
 
+// --- Progressive Overload / Exercise Tracking ---
+
+/** Tracks a single exercise performance in a completed workout */
+export interface ExerciseRecord {
+  exerciseId: string;
+  exerciseName: string;
+  durationSecs: number;       // How long the exercise lasted
+  completedAt: string;        // ISO date of the workout
+  preset: string | null;      // Which workout preset was used
+}
+
+/** Personal best for a specific exercise */
+export interface PersonalRecord {
+  exerciseId: string;
+  exerciseName: string;
+  bestDurationSecs: number;   // Longest time completed for this exercise
+  totalSessions: number;      // How many times this exercise has been done
+  lastDurationSecs: number;   // Duration in the most recent session
+  lastDate: string | null;    // Date of most recent session
+  bestDate: string | null;    // Date of personal best
+  improvedFromLast: boolean;  // Did they beat their previous session?
+}
+
 // --- Onboarding ---
 export interface OnboardingData {
   name: string;
@@ -199,6 +233,7 @@ export interface OnboardingData {
   goal: FitnessGoal | null;
   fitness_level: FitnessLevel | null;
   days_per_week: number;
+  workout_days: number[];
   session_duration_mins: number;
   injuries: Injury[];
   pet_name: string;

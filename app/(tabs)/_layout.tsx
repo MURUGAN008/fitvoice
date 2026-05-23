@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { COLORS } from '../../constants/theme';
-import { Text } from 'react-native';
+import { Home, Dumbbell, BarChart3, Trophy, User } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -21,28 +21,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🏠</Text>,
+          tabBarIcon: ({ color, size }) => <Home color={color} size={size || 24} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
-        name="workout"
+        name="workouts"
         options={{
           title: 'Workout',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>💪</Text>,
+          tabBarIcon: ({ color, size }) => <Dumbbell color={color} size={size || 24} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>📊</Text>,
+          tabBarIcon: ({ color, size }) => <BarChart3 color={color} size={size || 24} strokeWidth={2} />,
+        }}
+      />
+      <Tabs.Screen
+        name="league"
+        options={{
+          title: 'League',
+          tabBarIcon: ({ color, size }) => <Trophy color={color} size={size || 24} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>👤</Text>,
+          tabBarIcon: ({ color, size }) => <User color={color} size={size || 24} strokeWidth={2} />,
         }}
       />
     </Tabs>

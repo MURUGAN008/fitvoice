@@ -24,7 +24,11 @@
       },
       "package": "com.blazefit.app",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -48,6 +52,13 @@
         }
       ],
       "expo-video"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c527c733-0a04-4ef0-b30d-b8d3c2881b61"
+      }
+    },
+    "owner": "murugan_7"
   }
 }
