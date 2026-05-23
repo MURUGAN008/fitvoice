@@ -1,3 +1,16 @@
+diff --git a/node_modules/react-native-vision-camera/android/CMakeLists.txt b/node_modules/react-native-vision-camera/android/CMakeLists.txt
+index 1460dbd..e6cfcdc 100644
+--- a/node_modules/react-native-vision-camera/android/CMakeLists.txt
++++ b/node_modules/react-native-vision-camera/android/CMakeLists.txt
+@@ -60,7 +60,7 @@ target_link_libraries(
+         ${LOG_LIB}                          # <-- Logcat logger
+         android                             # <-- Android JNI core
+         ReactAndroid::jsi                   # <-- RN: JSI
+-        ReactAndroid::reactnativejni        # <-- RN: React Native JNI bindings
++        ReactAndroid::reactnative        # <-- RN: React Native JNI bindings
+         fbjni::fbjni                        # <-- fbjni
+ )
+ 
 diff --git a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CameraSession.kt b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CameraSession.kt
 index 16d9aa5..6392357 100644
 --- a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CameraSession.kt
