@@ -1,0 +1,52 @@
+diff --git a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CameraSession.kt b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CameraSession.kt
+index 16d9aa5..6392357 100644
+--- a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CameraSession.kt
++++ b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CameraSession.kt
+@@ -118,7 +118,8 @@ class CameraSession(private val context: Context, private val callback: Callback
+     }
+   }
+ 
+-  override fun getLifecycle(): Lifecycle = lifecycleRegistry
++  override val lifecycle: Lifecycle
++    get() = lifecycleRegistry
+ 
+   /**
+    * Configures the [CameraSession] with new values in one batch.
+diff --git a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/frameprocessors/VisionCameraProxy.kt b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/frameprocessors/VisionCameraProxy.kt
+index d697bef..98a5d45 100644
+--- a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/frameprocessors/VisionCameraProxy.kt
++++ b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/frameprocessors/VisionCameraProxy.kt
+@@ -14,6 +14,7 @@ import com.mrousavy.camera.react.CameraView
+ import java.lang.ref.WeakReference
+ 
+ @Suppress("KotlinJniMissingFunction") // we use fbjni.
++@OptIn(com.facebook.react.common.annotations.FrameworkAPI::class)
+ class VisionCameraProxy(private val reactContext: ReactApplicationContext) {
+   companion object {
+     const val TAG = "VisionCameraProxy"
+diff --git a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraViewManager.kt b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraViewManager.kt
+index 51b0d92..2798c04 100644
+--- a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraViewManager.kt
++++ b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraViewManager.kt
+@@ -27,7 +27,7 @@ class CameraViewManager : ViewGroupManager<CameraView>() {
+     view.update()
+   }
+ 
+-  override fun getExportedCustomDirectEventTypeConstants(): MutableMap<String, Any>? =
++  override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any>? =
+     MapBuilder.builder<String, Any>()
+       .put("cameraViewReady", MapBuilder.of("registrationName", "onViewReady"))
+       .put("cameraInitialized", MapBuilder.of("registrationName", "onInitialized"))
+diff --git a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraViewModule.kt b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraViewModule.kt
+index 6e02065..afc0a1c 100644
+--- a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraViewModule.kt
++++ b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraViewModule.kt
+@@ -189,7 +189,7 @@ class CameraViewModule(reactContext: ReactApplicationContext) : ReactContextBase
+   }
+ 
+   private fun canRequestPermission(permission: String): Boolean {
+-    val activity = currentActivity as? PermissionAwareActivity
++    val activity = reactApplicationContext.currentActivity as? PermissionAwareActivity
+     return activity?.shouldShowRequestPermissionRationale(permission) ?: false
+   }
+ 
