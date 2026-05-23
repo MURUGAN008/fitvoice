@@ -39,6 +39,8 @@ import { COLORS, FONT_SIZE, SPACING, BORDER_RADIUS, CARD_SHADOW } from '../const
 import { useUserStore } from '../store/userStore';
 import CircularTimer from '../components/CircularTimer';
 import PetAvatar from '../components/PetAvatar';
+import PoseDetectionCamera from '../components/PoseDetectionCamera';
+import { Camera as CameraIcon } from 'lucide-react-native';
 import { EXERCISE_IMAGES } from '../constants/images';
 import StrokeText from '../components/StrokeText';
 import ConfettiBlast from '../components/ConfettiBlast';
@@ -251,6 +253,13 @@ export default function WorkoutScreen() {
   
   // Execution state
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isCameraMode, setIsCameraMode] = useState(false);
+  const [repCount, setRepCount] = useState(0);
+
+  // Reset rep count when changing exercises
+  useEffect(() => {
+    setRepCount(0);
+  }, [currentIndex]);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
@@ -946,9 +955,25 @@ export default function WorkoutScreen() {
   // Both states use the same UI layout, just different logic
   return (
     <View style={styles.container}>
-      {/* Video Section */}
+      {/* Video / Camera Section */}
       <View style={styles.videoContainer}>
-        {player ? (
+        {isCameraMode ? (
+          <PoseDetectionCamera
+            exerciseName={currentExercise.name}
+            isActive={(workoutState === 'active' || workoutState === 'prepare') && !isPaused}
+            onFeedback={(msg) => {
+              if (coachVoiceEnabled) {
+                voiceCoach.speak(msg);
+              }
+            }}
+            onRepIncrement={() => {
+              setRepCount(prev => prev + 1);
+              if (sfxEnabled) {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              }
+            }}
+          />
+        ) : player ? (
           <VideoView 
             style={styles.video} 
             player={player}
@@ -959,6 +984,17 @@ export default function WorkoutScreen() {
         ) : (
           <ActivityIndicator color={COLORS.brand.orange} size="large" />
         )}
+
+        {/* Floating Toggle Camera/Video Button */}
+        <TouchableOpacity 
+          style={styles.cameraToggleButton}
+          onPress={() => {
+            if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setIsCameraMode(!isCameraMode);
+          }}
+        >
+          <CameraIcon size={20} color="#fff" />
+        </TouchableOpacity>
 
         {/* Floating Music Button */}
         <TouchableOpacity 
@@ -1030,6 +1066,12 @@ export default function WorkoutScreen() {
           isPaused={isPaused}
           color={workoutState === 'prepare' ? COLORS.brand.gold : COLORS.brand.orange}
         />
+
+        {isCameraMode && (
+          <View style={styles.repBadge}>
+            <Text style={styles.repBadgeText}>{repCount} Reps</Text>
+          </View>
+        )}
 
         {/* Dynamic Masterclass Tips or Prepare Text */}
         {workoutState === 'prepare' ? (
@@ -1512,6 +1554,36 @@ const styles = StyleSheet.create({
   },
   musicButtonText: {
     fontSize: FONT_SIZE.lg,
+  },
+  cameraToggleButton: {
+    position: 'absolute',
+    top: SPACING.md,
+    right: SPACING.md + 50,
+    width: 44,
+    height: 44,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.bg.accent,
+    zIndex: 20,
+  },
+  repBadge: {
+    backgroundColor: 'rgba(255, 107, 53, 0.15)',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.brand.orange,
+    marginTop: -SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  repBadgeText: {
+    fontSize: FONT_SIZE.md,
+    fontFamily: 'Inter_700Bold',
+    color: COLORS.brand.orange,
+    textAlign: 'center',
   },
 
   // XP Popup

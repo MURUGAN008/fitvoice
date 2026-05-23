@@ -45,6 +45,12 @@
         }
       ],
       [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "Blaze needs camera access for real-time form detection during workouts."
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
