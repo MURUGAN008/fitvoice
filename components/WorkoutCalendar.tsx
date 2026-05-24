@@ -10,9 +10,8 @@ const PRESET_OPTIONS = [
   { id: 'lower_body', name: 'Lower Body', icon: '🦵', color: '#60A5FA' },
   { id: 'core', name: 'Core Burn', icon: '⚡', color: COLORS.brand.gold },
 ];
-
 export default function WorkoutCalendar() {
-  const { workoutSchedule, updateSchedule, workoutHistory } = useUserStore();
+  const { workoutSchedule, updateSchedule, workoutHistory, savedCustomWorkouts } = useUserStore();
   const [editingDay, setEditingDay] = useState<number | null>(null);
 
   const getDayStatus = (date: Date) => {
@@ -46,8 +45,9 @@ export default function WorkoutCalendar() {
             const { isScheduled, hasCompleted, presetId } = getDayStatus(date);
             const isToday = idx === currentDayIndex;
 
+            const isCustom = savedCustomWorkouts.some(w => w.id === presetId);
             const presetColor = isScheduled 
-              ? PRESET_OPTIONS.find(p => p.id === presetId)?.color || COLORS.brand.orange
+              ? (isCustom ? COLORS.brand.yellow : PRESET_OPTIONS.find(p => p.id === presetId)?.color || COLORS.brand.orange)
               : COLORS.bg.tertiary;
 
             return (
@@ -76,7 +76,6 @@ export default function WorkoutCalendar() {
       </View>
     );
   };
-
   const renderEditModal = () => {
     if (editingDay === null) return null;
     const currentPreset = workoutSchedule[editingDay];
@@ -99,6 +98,7 @@ export default function WorkoutCalendar() {
                 <Text style={styles.presetOptionText}>Rest Day</Text>
               </TouchableOpacity>
 
+              <Text style={styles.sectionHeading}>Official Workouts</Text>
               {PRESET_OPTIONS.map(preset => (
                 <TouchableOpacity
                   key={preset.id}
@@ -113,6 +113,26 @@ export default function WorkoutCalendar() {
                   <View style={[styles.presetColorIndicator, { backgroundColor: preset.color }]} />
                 </TouchableOpacity>
               ))}
+
+              {savedCustomWorkouts.length > 0 && (
+                <>
+                  <Text style={styles.sectionHeading}>Custom Workouts</Text>
+                  {savedCustomWorkouts.map(custom => (
+                    <TouchableOpacity
+                      key={custom.id}
+                      style={[styles.presetOption, currentPreset === custom.id && styles.presetOptionActive]}
+                      onPress={() => {
+                        updateSchedule(editingDay, custom.id);
+                        setEditingDay(null);
+                      }}
+                    >
+                      <Text style={styles.presetOptionIcon}>✨</Text>
+                      <Text style={styles.presetOptionText}>{custom.name}</Text>
+                      <View style={[styles.presetColorIndicator, { backgroundColor: COLORS.brand.yellow }]} />
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
             </ScrollView>
 
             <TouchableOpacity style={styles.closeButton} onPress={() => setEditingDay(null)}>
@@ -123,7 +143,6 @@ export default function WorkoutCalendar() {
       </Modal>
     );
   };
-
   return (
     <View style={styles.container}>
       {renderWeekView()}
@@ -213,6 +232,16 @@ const styles = StyleSheet.create({
   },
   modalScroll: {
     marginBottom: SPACING.md,
+  },
+  sectionHeading: {
+    color: COLORS.text.secondary,
+    fontSize: FONT_SIZE.xs,
+    fontFamily: 'Inter_600SemiBold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xs,
+    marginLeft: SPACING.xs,
   },
   presetOption: {
     flexDirection: 'row',

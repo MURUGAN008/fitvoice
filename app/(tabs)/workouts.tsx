@@ -31,10 +31,10 @@ type ExerciseItem = {
 };
 
 const PRESETS: PresetItem[] = [
-  { id: 'full_body', name: '20-Min Full Body', desc: 'A rigorous full body routine to build strength and push your heart rate.', duration: '20 mins', exercisesCount: 5, icon: '🔥', bg: COLORS.brand.orange },
-  { id: 'core', name: '10-Min Core Burn', desc: 'Target your rectus abdominis, obliques, and stabilizer muscles.', duration: '10 mins', exercisesCount: 4, icon: '⚡', bg: COLORS.brand.yellow },
-  { id: 'lower_body', name: '15-Min Lower Body', desc: 'Develop explosive leg power and core stabilization.', duration: '15 mins', exercisesCount: 4, icon: '🦵', bg: COLORS.bg.tertiary },
-  { id: 'upper_body', name: '15-Min Upper Body', desc: 'Focus on chest, triceps, shoulders, and postural back muscles.', duration: '15 mins', exercisesCount: 4, icon: '💪', bg: COLORS.bg.tertiary },
+  { id: 'full_body', name: '20-Min Full Body', desc: 'A rigorous full body routine to build strength and push your heart rate.', duration: '20 mins', exercisesCount: 6, icon: '🔥', bg: COLORS.brand.orange },
+  { id: 'core', name: '10-Min Core Burn', desc: 'Target your rectus abdominis, obliques, and stabilizer muscles.', duration: '10 mins', exercisesCount: 6, icon: '⚡', bg: COLORS.brand.yellow },
+  { id: 'lower_body', name: '15-Min Lower Body', desc: 'Develop explosive leg power and core stabilization.', duration: '15 mins', exercisesCount: 7, icon: '🦵', bg: COLORS.bg.tertiary },
+  { id: 'upper_body', name: '15-Min Upper Body', desc: 'Focus on chest, triceps, shoulders, and postural back muscles.', duration: '15 mins', exercisesCount: 7, icon: '💪', bg: COLORS.bg.tertiary },
 ];
 
 export const MOVEMENTS: ExerciseItem[] = [
@@ -53,6 +53,15 @@ export const MOVEMENTS: ExerciseItem[] = [
   { id: '13', name: 'Mountain Climbers', icon: '🏔️', targetMuscles: ['Core', 'Cardio', 'Shoulders'], difficulty: 1.4, tips: ['Drive knees to chest rapidly.', 'Keep hips low and core locked.', 'Distribute weight evenly.'], commonMistakes: ['Hips bouncing too high', 'Slipping hands forward'] },
   { id: '14', name: 'Pike Push-Up', icon: '⛰️', targetMuscles: ['Shoulders', 'Triceps', 'Upper Back'], difficulty: 1.7, tips: ['Look at your toes.', 'Lower crown of head to floor.', 'Keep hips high in inverted V.'], commonMistakes: ['Flaring elbows wide', 'Losing the pike shape'] },
   { id: '15', name: 'Superman Raises', icon: '🦸', targetMuscles: ['Lower Back', 'Glutes', 'Hamstrings'], difficulty: 1.2, tips: ['Lift arms/legs simultaneously.', 'Hold for 1 sec at top.', 'Look down to protect neck.'], commonMistakes: ['Overextending or jerking neck', 'Bending knees instead of lifting thighs'] },
+  { id: '16', name: 'Dead Bug', icon: '🐛', targetMuscles: ['Core', 'Abs'], difficulty: 1.2, tips: ['Keep lower back flat on floor.', 'Lower opposite arm and leg slowly.', 'Exhale as you return to start.'], commonMistakes: ['Arching lower back off floor', 'Rushing the movement'] },
+  { id: '17', name: 'High Knees', icon: '🏃', targetMuscles: ['Cardio', 'Quads', 'Calves'], difficulty: 1.3, tips: ['Drive knees to hip height.', 'Land softly on balls of feet.', 'Pump arms for momentum.'], commonMistakes: ['Leaning backward too much', 'Not lifting knees high enough'] },
+  { id: '18', name: 'Russian Twists', icon: '🔄', targetMuscles: ['Core', 'Obliques'], difficulty: 1.4, tips: ['Lean back at 45-degree angle.', 'Rotate shoulders side to side.', 'Keep feet elevated for challenge.'], commonMistakes: ['Only moving arms, not twisting torso', 'Rounding lower back'] },
+  { id: '19', name: 'Decline Pushups', icon: '📈', targetMuscles: ['Chest', 'Shoulders', 'Triceps', 'Core'], difficulty: 1.8, tips: ['Elevate feet on chair/bench.', 'Keep body in straight line.', 'Lower chest to floor and push up.'], commonMistakes: ['Sagging hips', 'Flaring elbows wide'] },
+  { id: '20', name: 'Diamond Pushups', icon: '💎', targetMuscles: ['Triceps', 'Chest', 'Shoulders', 'Core'], difficulty: 1.7, tips: ['Form diamond shape with thumbs/fingers.', 'Keep elbows tucked close to body.', 'Lower chest to hands.'], commonMistakes: ['Flaring elbows outwards', 'Sagging hips'] },
+  { id: '21', name: 'Inverted Rows', icon: '🛶', targetMuscles: ['Upper Back', 'Lats', 'Biceps', 'Core'], difficulty: 1.5, tips: ['Position under bar or sturdy table.', 'Pull chest to bar/edge.', 'Keep body in straight line.'], commonMistakes: ['Rounding shoulders at top', 'Sagging hips'] },
+  { id: '22', name: 'Single-Leg Glute Bridge', icon: '🌉', targetMuscles: ['Glutes', 'Hamstrings', 'Core'], difficulty: 1.4, tips: ['Lift and extend one leg.', 'Drive through heel of planted foot.', 'Squeeze glutes at the top.'], commonMistakes: ['Arching lower back', 'Letting elevated hip sag'] },
+  { id: '23', name: 'Single-Leg Romanian Deadlift', icon: '⚖️', targetMuscles: ['Hamstrings', 'Glutes', 'Core'], difficulty: 1.6, tips: ['Hinge at hips, keep back flat.', 'Extend one leg straight behind you.', 'Squeeze glutes to stand upright.'], commonMistakes: ['Rounding the back', 'Losing balance and rushing'] },
+  { id: '24', name: 'Single-Leg Squats', icon: '🦵', targetMuscles: ['Quads', 'Glutes', 'Hamstrings'], difficulty: 2.2, tips: ['Extend one leg forward in air.', 'Lower hips down on standing leg.', 'Keep knee aligned with toes.'], commonMistakes: ['Knee caving inward', 'Rounding lower back'] },
 ];
 
 export default function WorkoutLibraryScreen() {

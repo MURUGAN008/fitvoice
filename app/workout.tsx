@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image, TextInput, Modal } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeIn, FadeOut, SlideInRight } from 'react-native-reanimated';
@@ -33,7 +33,8 @@ import {
   Play,
   Pause,
   Volume2,
-  Moon
+  Moon,
+  Smartphone
 } from 'lucide-react-native';
 import { COLORS, FONT_SIZE, SPACING, BORDER_RADIUS, CARD_SHADOW } from '../constants/theme';
 import { useUserStore } from '../store/userStore';
@@ -151,6 +152,60 @@ const ALL_EXERCISES: Exercise[] = [
     tips: ['Lift arms and legs simultaneously.', 'Hold for 1 sec at the top.', 'Look down to protect neck.'],
     targetMuscles: ['Lower Back', 'Glutes', 'Hamstrings'],
     commonMistakes: ['Overextending or jerking the neck', 'Bending knees instead of lifting thighs']
+  },
+  { 
+    id: '16', uniqueKey: '16', name: 'Dead Bug', file: 'Dead_Bug.mp4', duration: 30, difficulty: 1.2,
+    tips: ['Keep your lower back pressed flat into the floor.', 'Lower opposite arm and leg slowly.', 'Exhale as you return to the starting position.'],
+    targetMuscles: ['Core', 'Abs'],
+    commonMistakes: ['Arching the lower back off the floor', 'Moving opposite arm and leg in a rushed manner']
+  },
+  { 
+    id: '17', uniqueKey: '17', name: 'High Knees', file: 'High_Knees.mp4', duration: 30, difficulty: 1.3,
+    tips: ['Drive your knees up to hip height.', 'Land softly on the balls of your feet.', 'Pump your arms to maintain momentum.'],
+    targetMuscles: ['Cardio', 'Quads', 'Calves'],
+    commonMistakes: ['Leaning backwards too much', 'Not lifting knees high enough']
+  },
+  { 
+    id: '18', uniqueKey: '18', name: 'Russian Twists', file: 'Russian_Twists.mp4', duration: 30, difficulty: 1.4,
+    tips: ['Keep your spine straight and lean back at a 45-degree angle.', 'Rotate your shoulders and torso side to side.', 'Keep your feet elevated for a bigger challenge.'],
+    targetMuscles: ['Core', 'Obliques'],
+    commonMistakes: ['Only moving your arms instead of twisting your torso', 'Rounding your lower back']
+  },
+  { 
+    id: '19', uniqueKey: '19', name: 'Decline Pushups', file: 'Decline_Pushups.mp4', duration: 30, difficulty: 1.8,
+    tips: ['Elevate your feet on a chair or bench.', 'Keep your body in a straight line.', 'Lower your chest to the floor and push up.'],
+    targetMuscles: ['Chest', 'Shoulders', 'Triceps', 'Core'],
+    commonMistakes: ['Sagging hips', 'Flaring elbows out too wide']
+  },
+  { 
+    id: '20', uniqueKey: '20', name: 'Diamond Pushups', file: 'Diamond_PushUps.mp4', duration: 30, difficulty: 1.7,
+    tips: ['Form a diamond shape with your thumbs and index fingers.', 'Keep your elbows tucked close to your body.', 'Lower your chest to your hands.'],
+    targetMuscles: ['Triceps', 'Chest', 'Shoulders', 'Core'],
+    commonMistakes: ['Flaring elbows outwards', 'Sagging hips']
+  },
+  { 
+    id: '21', uniqueKey: '21', name: 'Inverted Rows', file: 'Inverted_Rows.mp4', duration: 30, difficulty: 1.5,
+    tips: ['Position yourself under a bar or sturdy table edge.', 'Pull your chest up to the bar/edge.', 'Keep your body in a straight line from head to heels.'],
+    targetMuscles: ['Upper Back', 'Lats', 'Biceps', 'Core'],
+    commonMistakes: ['Rounding your shoulders at the top', 'Sagging hips or arching back']
+  },
+  { 
+    id: '22', uniqueKey: '22', name: 'Single-Leg Glute Bridge', file: 'SingleLeg_Glute_Bridge.mp4', duration: 30, difficulty: 1.4,
+    tips: ['Lift one leg off the ground and extend it.', 'Drive through the heel of the planted foot to lift your hips.', 'Squeeze your glutes at the top.'],
+    targetMuscles: ['Glutes', 'Hamstrings', 'Core'],
+    commonMistakes: ['Arching the lower back', 'Letting the elevated hip sag']
+  },
+  { 
+    id: '23', uniqueKey: '23', name: 'Single-Leg Romanian Deadlift', file: 'SingleLeg_Romanian_Deadlift.mp4', duration: 30, difficulty: 1.6,
+    tips: ['Hinge at your hips while keeping your back flat.', 'Extend one leg straight behind you as your torso lowers.', 'Squeeze the glutes of the standing leg to return upright.'],
+    targetMuscles: ['Hamstrings', 'Glutes', 'Core'],
+    commonMistakes: ['Rounding the back', 'Losing balance and rushing the movement']
+  },
+  { 
+    id: '24', uniqueKey: '24', name: 'Single-Leg Squats', file: 'SingleLeg_Squats.mp4', duration: 30, difficulty: 2.2,
+    tips: ['Extend one leg forward in the air.', 'Lower your hips down and back on the standing leg.', 'Keep your knee aligned with your toes and drive back up.'],
+    targetMuscles: ['Quads', 'Glutes', 'Hamstrings'],
+    commonMistakes: ['Knee caving inward', 'Rounding the lower back']
   }
 ];
 
@@ -170,10 +225,10 @@ const MUSIC_LIBRARY: Track[] = [
 ];
 
 const PRESET_WORKOUTS: Record<string, string[]> = {
-  full_body: ['7', '1', '2', '13', '11'], // Burpees, Squats, Standard Push-Up, Mountain Climbers, Jumping Jacks
-  core: ['10', '4', '5', '13'], // Hollow Body Hold, Forearm Plank, Bicycle Twisting Crunch, Mountain Climbers
-  lower_body: ['1', '6', '9', '3'], // Squats, Bulgarian Split Squat, Glute Bridge, Reverse Lunge
-  upper_body: ['2', '8', '14', '4'], // Standard Push-Up, Chair Dips, Pike Push-Up, Forearm Plank
+  full_body: ['7', '1', '2', '13', '11', '17'], // Burpees, Squats, Standard Push-Up, Mountain Climbers, Jumping Jacks, High Knees
+  core: ['10', '4', '5', '13', '16', '18'], // Hollow Body Hold, Forearm Plank, Bicycle Twisting Crunch, Mountain Climbers, Dead Bug, Russian Twists
+  lower_body: ['1', '6', '9', '3', '22', '23', '24'], // Squats, Bulgarian Split Squat, Glute Bridge, Reverse Lunge, Single-Leg Glute Bridge, Single-Leg Romanian Deadlift, Single-Leg Squats
+  upper_body: ['2', '8', '14', '4', '19', '20', '21'], // Standard Push-Up, Chair Dips, Pike Push-Up, Forearm Plank, Decline Pushups, Diamond Pushups, Inverted Rows
   streak_saver: ['11', '1', '9', '4'], // Jumping Jacks, Squats, Glute Bridge, Forearm Plank (Fast 2-Min rescue)
 };
 
@@ -186,11 +241,11 @@ const getPresetExercises = (preset: string): Exercise[] => {
     if (preset === 'streak_saver') {
       baseEx.duration = 30; // 4 exercises * 30s = 120s (exactly 2 minutes!)
     } else if (preset === 'core') {
-      baseEx.duration = 150; // 150s * 4 = 10 minutes total
+      baseEx.duration = 100; // 100s * 6 = 10 minutes total
     } else if (preset === 'full_body') {
-      baseEx.duration = 240; // 240s * 5 = 20 minutes total
+      baseEx.duration = 200; // 200s * 6 = 20 minutes total
     } else if (preset === 'lower_body' || preset === 'upper_body') {
-      baseEx.duration = 225; // 225s * 4 = 15 minutes total
+      baseEx.duration = 130; // 130s * 7 = 15 minutes total
     }
     
     return baseEx;
@@ -201,7 +256,7 @@ const REST_DURATION = 5; // 5 seconds rest between exercises
 const MINIMUM_HABIT_TIME = 120; // 2 minutes
 
 export default function WorkoutScreen() {
-  const { addXp, onboardingData, completeWorkout, syncToCloud, petStats, getPersonalRecord, savedCustomWorkouts } = useUserStore();
+  const { addXp, onboardingData, completeWorkout, syncToCloud, petStats, getPersonalRecord, savedCustomWorkouts, saveCustomWorkout } = useUserStore();
   const { preset, custom_ids, custom_plan_id } = useLocalSearchParams<{ preset?: string, custom_ids?: string, custom_plan_id?: string }>();
   const petName = onboardingData.pet_name || 'Blaze';
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
@@ -209,6 +264,10 @@ export default function WorkoutScreen() {
   const [workoutState, setWorkoutState] = useState<WorkoutState>('preview');
   const [exercises, setExercises] = useState<Exercise[]>(DEFAULT_EXERCISES);
   const [restDuration, setRestDuration] = useState(15);
+  
+  const [isModified, setIsModified] = useState(false);
+  const [saveModalVisible, setSaveModalVisible] = useState(false);
+  const [customWorkoutName, setCustomWorkoutName] = useState('');
 
   useEffect(() => {
     if (custom_plan_id) {
@@ -291,6 +350,40 @@ export default function WorkoutScreen() {
   const isValidTime = totalTime >= MINIMUM_HABIT_TIME;
 
   const currentExercise = exercises[currentIndex];
+
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
+
+  const isFloorExercise = (name: string): boolean => {
+    const normalized = name.toLowerCase();
+    return (
+      normalized.includes('push-up') ||
+      normalized.includes('pushup') ||
+      normalized.includes('push_up') ||
+      normalized.includes('plank') ||
+      normalized.includes('bridge') ||
+      normalized.includes('crunch') ||
+      normalized.includes('dead bug') ||
+      normalized.includes('dead_bug') ||
+      normalized.includes('superman') ||
+      normalized.includes('hollow') ||
+      normalized.includes('climber') ||
+      normalized.includes('twist') ||
+      normalized.includes('row') ||
+      normalized.includes('deadlift')
+    );
+  };
+
+  useEffect(() => {
+    if (workoutState === 'active' && isCameraMode && isFloorExercise(currentExercise?.name || '')) {
+      setShowSetupGuide(true);
+      const timer = setTimeout(() => {
+        setShowSetupGuide(false);
+      }, 7000); // Show for 7 seconds to give ample setup time
+      return () => clearTimeout(timer);
+    } else {
+      setShowSetupGuide(false);
+    }
+  }, [currentIndex, workoutState, isCameraMode, currentExercise]);
   
   // Resolve local cached URI if available
   const [resolvedVideoUrl, setResolvedVideoUrl] = useState<string>('');
@@ -580,6 +673,19 @@ export default function WorkoutScreen() {
     setWorkoutState('prepare');
   };
 
+  const handleSaveAsCustom = (name: string) => {
+    const customPlan = {
+      id: `custom_${Date.now()}`,
+      name,
+      exercises: exercises.map(ex => ({ id: ex.id, duration: ex.duration })),
+      restDuration,
+      createdAt: new Date().toISOString()
+    };
+    saveCustomWorkout(customPlan);
+    setIsModified(false);
+    if (sfxEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
   const handleFinish = () => {
     // Log workout to local history + Supabase cloud
     completeWorkout({
@@ -604,16 +710,19 @@ export default function WorkoutScreen() {
       const newEx = [...exercises];
       [newEx[index - 1], newEx[index]] = [newEx[index], newEx[index - 1]];
       setExercises(newEx);
+      setIsModified(true);
     } else if (direction === 'down' && index < exercises.length - 1) {
       const newEx = [...exercises];
       [newEx[index + 1], newEx[index]] = [newEx[index], newEx[index + 1]];
       setExercises(newEx);
+      setIsModified(true);
     }
   };
 
   const removeExercise = (index: number) => {
     const newEx = exercises.filter((_, i) => i !== index);
     setExercises(newEx);
+    setIsModified(true);
   };
 
   const updateDuration = (index: number, change: number) => {
@@ -626,6 +735,7 @@ export default function WorkoutScreen() {
       }
       return newEx;
     });
+    setIsModified(true);
   };
 
   const handleSwap = (index: number) => {
@@ -647,7 +757,10 @@ export default function WorkoutScreen() {
         <GestureHandlerRootView style={styles.listContainer}>
           <DraggableFlatList
             data={exercises}
-            onDragEnd={({ data }) => setExercises(data)}
+            onDragEnd={({ data }) => {
+              setExercises(data);
+              setIsModified(true);
+            }}
             keyExtractor={(item) => item.uniqueKey}
             renderItem={({ item, drag, isActive, getIndex }: RenderItemParams<Exercise>) => {
               const idx = getIndex() || 0;
@@ -737,6 +850,14 @@ export default function WorkoutScreen() {
           >
             <Text style={styles.primaryButtonText}>Begin Workout</Text>
           </TouchableOpacity>
+          {isModified && (
+            <TouchableOpacity 
+              style={[styles.saveCustomButton, { marginTop: SPACING.sm }]} 
+              onPress={() => setSaveModalVisible(true)}
+            >
+              <Text style={styles.saveCustomButtonText}>Save as Custom Workout</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.secondaryButton} onPress={() => router.replace('/(tabs)')}>
             <Text style={styles.secondaryButtonText}>Cancel</Text>
           </TouchableOpacity>
@@ -775,6 +896,7 @@ export default function WorkoutScreen() {
                         };
                         setExercises(newEx);
                         setSwappingIndex(null);
+                        setIsModified(true);
                       }}
                     >
                       <View>
@@ -793,6 +915,58 @@ export default function WorkoutScreen() {
             </Animated.View>
           </View>
         )}
+
+        {/* ==========================================
+            SAVE AS CUSTOM WORKOUT MODAL
+            ========================================== */}
+        <Modal transparent animationType="fade" visible={saveModalVisible} onRequestClose={() => setSaveModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <Animated.View entering={FadeIn} style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Save Custom Workout</Text>
+                <TouchableOpacity onPress={() => setSaveModalVisible(false)}>
+                  <X size={24} color={COLORS.text.secondary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={{ marginBottom: SPACING.lg }}>
+                <Text style={{ color: COLORS.text.secondary, marginBottom: SPACING.sm, fontFamily: 'Inter_500Medium' }}>
+                  Give your customized workout a name:
+                </Text>
+                <TextInput
+                  style={{
+                    backgroundColor: COLORS.bg.tertiary,
+                    borderWidth: 1,
+                    borderColor: COLORS.bg.accent,
+                    borderRadius: BORDER_RADIUS.md,
+                    padding: SPACING.md,
+                    color: COLORS.text.primary,
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: FONT_SIZE.md,
+                  }}
+                  placeholder="e.g. My Upper Body Burn"
+                  placeholderTextColor={COLORS.text.tertiary}
+                  value={customWorkoutName}
+                  onChangeText={setCustomWorkoutName}
+                  autoFocus
+                />
+              </View>
+
+              <TouchableOpacity 
+                style={[styles.modalPrimaryButton, !customWorkoutName.trim() && { opacity: 0.5 }]} 
+                onPress={() => {
+                  if (!customWorkoutName.trim()) return;
+                  handleSaveAsCustom(customWorkoutName.trim());
+                  setSaveModalVisible(false);
+                  setCustomWorkoutName('');
+                }}
+                disabled={!customWorkoutName.trim()}
+              >
+                <Text style={styles.modalPrimaryButtonText}>Save Workout</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -949,18 +1123,15 @@ export default function WorkoutScreen() {
     );
   }
 
-  // ==========================================
-  // RENDER: ACTIVE & PREPARE STATE
-  // ==========================================
-  // Both states use the same UI layout, just different logic
+  const showFullScreenCamera = isCameraMode && workoutState === 'active';
+
   return (
     <View style={styles.container}>
-      {/* Video / Camera Section */}
-      <View style={styles.videoContainer}>
-        {isCameraMode ? (
+      {showFullScreenCamera ? (
+        <View style={styles.fullScreenCameraContainer}>
           <PoseDetectionCamera
             exerciseName={currentExercise.name}
-            isActive={(workoutState === 'active' || workoutState === 'prepare') && !isPaused}
+            isActive={!isPaused}
             onFeedback={(msg) => {
               if (coachVoiceEnabled) {
                 voiceCoach.speak(msg);
@@ -973,169 +1144,367 @@ export default function WorkoutScreen() {
               }
             }}
           />
-        ) : player ? (
-          <VideoView 
-            style={styles.video} 
-            player={player}
-            allowsPictureInPicture={false} 
-            contentFit="cover"
-            nativeControls={false}
-          />
-        ) : (
-          <ActivityIndicator color={COLORS.brand.orange} size="large" />
-        )}
 
-        {/* Floating Toggle Camera/Video Button */}
-        <TouchableOpacity 
-          style={styles.cameraToggleButton}
-          onPress={() => {
-            if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setIsCameraMode(!isCameraMode);
-          }}
-        >
-          <CameraIcon size={20} color="#fff" />
-        </TouchableOpacity>
+          {showSetupGuide && (
+            <Animated.View 
+              entering={FadeIn.duration(400)} 
+              exiting={FadeOut.duration(400)} 
+              style={styles.floorSetupGuideContainer}
+            >
+              <View style={styles.floorSetupHeaderRow}>
+                <Smartphone size={16} color={COLORS.brand.orange} />
+                <Text style={styles.floorSetupHeaderText}>FLOOR EXERCISE SETUP</Text>
+              </View>
+              
+              <View style={styles.floorSetupStepRow}>
+                <View style={styles.floorSetupStepNumber}>
+                  <Text style={styles.floorSetupStepNumberText}>1</Text>
+                </View>
+                <Text style={styles.floorSetupStepText}>
+                  Keep your phone <Text style={{ fontFamily: 'Inter_700Bold', color: '#FFF' }}>vertical (portrait)</Text> on a stand or floor.
+                </Text>
+              </View>
 
-        {/* Floating Music Button */}
-        <TouchableOpacity 
-          style={styles.musicButton}
-          onPress={() => {
-            if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setIsPaused(true);
-            setMusicModalVisible(true);
-          }}
-        >
-          <Music size={20} color="#fff" />
-        </TouchableOpacity>
-      </View>
+              <View style={styles.floorSetupStepRow}>
+                <View style={styles.floorSetupStepNumber}>
+                  <Text style={styles.floorSetupStepNumberText}>2</Text>
+                </View>
+                <Text style={styles.floorSetupStepText}>
+                  Move <Text style={{ fontFamily: 'Inter_700Bold', color: '#FFF' }}>6-8 feet (2 meters) away</Text> from the camera.
+                </Text>
+              </View>
 
-      {/* Info Section */}
-      <View style={styles.infoContainer}>
-        {/* Floating Masterclass '?' Button */}
-        <TouchableOpacity 
-          style={styles.masterclassButton}
-          onPress={() => {
-            if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setIsPaused(true);
-            setMasterclassVisible(true);
-          }}
-        >
-          <Text style={styles.masterclassButtonText}>?</Text>
-        </TouchableOpacity>
+              <View style={styles.floorSetupStepRow}>
+                <View style={styles.floorSetupStepNumber}>
+                  <Text style={styles.floorSetupStepNumberText}>3</Text>
+                </View>
+                <Text style={styles.floorSetupStepText}>
+                  Lie down <Text style={{ fontFamily: 'Inter_700Bold', color: '#FFF' }}>side-on (profile view)</Text> so your full body fits in frame.
+                </Text>
+              </View>
+            </Animated.View>
+          )}
 
-        {/* Sleeping Fox Warning - Placed at the top so it never blocks buttons */}
-        {isPaused && pauseTimer > 10 && (
-          <Animated.View entering={FadeIn} style={styles.sleepingFoxContainer}>
-            <View style={{ marginBottom: 6 }}>
-              <Moon size={32} color={COLORS.brand.yellow} />
-            </View>
-            <Text style={styles.sleepingFoxText}>Blaze is asleep!</Text>
-          </Animated.View>
-        )}
-
-        <Text style={styles.exerciseName}>{currentExercise.name}</Text>
-        
-        {/* Progressive Overload: Beat your record banner */}
-        {(() => {
-          if (currentExercise.id === 'rest' || currentExercise.name.toLowerCase() === 'rest') return null;
-          const pr = getPersonalRecord(toExerciseId(currentExercise.name));
-          if (!pr) return null;
-          const isRecord = newRecordExercise === currentExercise.name;
-          if (isRecord) {
-            return (
-              <Animated.View entering={FadeIn} style={[styles.newRecordBanner, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}>
-                <Trophy size={16} color={COLORS.bg.primary} />
-                <Text style={styles.newRecordText}>NEW RECORD!</Text>
-              </Animated.View>
-            );
-          }
-          return (
-            <View style={styles.lastTimeBanner}>
-              <Text style={styles.lastTimeText}>
-                Last: {pr.lastDurationSecs}s • Best: {pr.bestDurationSecs}s
+          {/* Floating Header */}
+          <View style={styles.floatingHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.exerciseName, styles.floatingTextShadow, { color: '#FFF' }]}>
+                {currentExercise.name}
               </Text>
+              <Text style={[styles.progressText, styles.floatingTextShadow]}>
+                Exercise {currentIndex + 1} of {exercises.length}
+              </Text>
+              
+              {/* Progressive Overload: Beat your record banner */}
+              {(() => {
+                if (currentExercise.id === 'rest' || currentExercise.name.toLowerCase() === 'rest') return null;
+                const pr = getPersonalRecord(toExerciseId(currentExercise.name));
+                if (!pr) return null;
+                const isRecord = newRecordExercise === currentExercise.name;
+                if (isRecord) {
+                  return (
+                    <Animated.View entering={FadeIn} style={[styles.newRecordBanner, { alignSelf: 'flex-start', marginTop: 4 }]}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Trophy size={14} color={COLORS.bg.primary} />
+                        <Text style={styles.newRecordText}>NEW RECORD!</Text>
+                      </View>
+                    </Animated.View>
+                  );
+                }
+                return (
+                  <View style={[styles.lastTimeBanner, { alignSelf: 'flex-start', marginTop: 4, backgroundColor: 'rgba(255, 179, 71, 0.25)', borderColor: 'rgba(255, 179, 71, 0.4)' }]}>
+                    <Text style={[styles.lastTimeText, { color: COLORS.brand.gold }]}>
+                      Last: {pr.lastDurationSecs}s • Best: {pr.bestDurationSecs}s
+                    </Text>
+                  </View>
+                );
+              })()}
             </View>
-          );
-        })()}
-        
-        <CircularTimer
-          size={140}
-          strokeWidth={6}
-          timeLeft={timeLeft}
-          totalTime={workoutState === 'prepare' ? 5 : exercises[currentIndex]?.duration || 30}
-          isPaused={isPaused}
-          color={workoutState === 'prepare' ? COLORS.brand.gold : COLORS.brand.orange}
-        />
 
-        {isCameraMode && (
-          <View style={styles.repBadge}>
-            <Text style={styles.repBadgeText}>{repCount} Reps</Text>
+            {/* Floating Top-Right Quick Actions */}
+            <View style={styles.floatingHeaderRight}>
+              <TouchableOpacity 
+                style={[styles.floatingIconButton, styles.floatingIconButtonActive]}
+                onPress={() => {
+                  if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setIsCameraMode(false);
+                }}
+              >
+                <CameraIcon size={20} color={COLORS.brand.orange} />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.floatingIconButton}
+                onPress={() => {
+                  if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setIsPaused(true);
+                  setMusicModalVisible(true);
+                }}
+              >
+                <Music size={20} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.floatingIconButton}
+                onPress={() => {
+                  if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setIsPaused(true);
+                  setMasterclassVisible(true);
+                }}
+              >
+                <HelpCircle size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </View>
-        )}
 
-        {/* Dynamic Masterclass Tips or Prepare Text */}
-        {workoutState === 'prepare' ? (
-          <Animated.View entering={FadeIn} exiting={FadeOut}>
-            <Text style={[styles.tipText, { color: COLORS.brand.yellow, fontSize: FONT_SIZE.lg }]}>
-              Get in position! Starting soon...
-            </Text>
-          </Animated.View>
-        ) : (
-          <Animated.View 
-            key={tipIndex} 
-            entering={SlideInRight} 
-            exiting={FadeOut}
-            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 40, paddingHorizontal: SPACING.lg }}
-          >
-            <Lightbulb size={18} color={COLORS.brand.yellow} />
-            <Text style={[styles.tipText, { minHeight: undefined, paddingHorizontal: 0, flex: 1, textAlign: 'left' }]}>
-              {currentExercise.tips[tipIndex]}
-            </Text>
-          </Animated.View>
-        )}
+          {/* Sleeping Fox Warning - Center Overlaid */}
+          {isPaused && pauseTimer > 10 && (
+            <Animated.View entering={FadeIn} style={styles.floatingSleepingFox}>
+              <View style={{ marginBottom: 6 }}>
+                <Moon size={32} color={COLORS.brand.yellow} />
+              </View>
+              <Text style={styles.sleepingFoxText}>Blaze is asleep!</Text>
+            </Animated.View>
+          )}
 
-        {/* Progress Dots */}
-        <View style={styles.progressContainer}>
-          {exercises.map((ex, idx) => (
-            <View 
-              key={ex.uniqueKey || `dot_${idx}_${ex.id}`} 
-              style={[
-                styles.dot, 
-                idx === currentIndex ? styles.dotActive : idx < currentIndex ? styles.dotCompleted : null
-              ]} 
+          {/* Floating Sidebar HUD (Timer & Reps) */}
+          <View style={styles.floatingHUDColumn}>
+            <CircularTimer
+              size={110}
+              strokeWidth={5}
+              timeLeft={timeLeft}
+              totalTime={exercises[currentIndex]?.duration || 30}
+              isPaused={isPaused}
+              color={COLORS.brand.orange}
             />
-          ))}
-        </View>
-        
-        {/* Play / Pause Toggle without background */}
-        <View style={styles.activeActionsRow}>
-          <TouchableOpacity 
-            style={styles.pauseButtonContainer}
-            onPress={() => {
-              if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setIsPaused(!isPaused);
-            }}
-            activeOpacity={0.7}
-          >
-            {isPaused ? (
-              <Play size={56} color={COLORS.brand.orange} fill={COLORS.brand.orange} />
-            ) : (
-              <Pause size={56} color={COLORS.brand.orange} fill={COLORS.brand.orange} />
-            )}
-          </TouchableOpacity>
+            
+            <View style={styles.floatingRepCard}>
+              <Text style={styles.floatingRepLabel}>REPS</Text>
+              <Text style={styles.floatingRepValue}>{repCount}</Text>
+            </View>
+          </View>
 
-          <TouchableOpacity 
-            style={styles.finishEarlyButton}
-            onPress={() => {
-              if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setTimeLeft(0);
-            }}
-            activeOpacity={0.7}
-          >
-            <SkipForward size={36} color={COLORS.text.secondary} />
-          </TouchableOpacity>
+          {/* Floating Bottom HUD Panel */}
+          <View style={styles.floatingBottomContainer}>
+            {/* Tips overlay */}
+            <Animated.View 
+              key={tipIndex} 
+              entering={SlideInRight} 
+              exiting={FadeOut}
+              style={styles.floatingTipBox}
+            >
+              <Lightbulb size={16} color={COLORS.brand.yellow} style={{ marginTop: 2 }} />
+              <Text style={styles.floatingTipText} numberOfLines={2}>
+                {currentExercise.tips[tipIndex]}
+              </Text>
+            </Animated.View>
+
+            {/* Progress Dots */}
+            <View style={[styles.progressContainer, { marginVertical: SPACING.xs }]}>
+              {exercises.map((ex, idx) => (
+                <View 
+                  key={ex.uniqueKey || `dot_${idx}_${ex.id}`} 
+                  style={[
+                    styles.dot, 
+                    idx === currentIndex ? styles.dotActive : idx < currentIndex ? styles.dotCompleted : null
+                  ]} 
+                />
+              ))}
+            </View>
+
+            {/* Control Row */}
+            <View style={styles.floatingControlsRow}>
+              <TouchableOpacity 
+                style={styles.floatingPlayPauseButton}
+                onPress={() => {
+                  if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setIsPaused(!isPaused);
+                }}
+                activeOpacity={0.7}
+              >
+                {isPaused ? (
+                  <Play size={28} color="#FFF" fill="#FFF" />
+                ) : (
+                  <Pause size={28} color="#FFF" fill="#FFF" />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.floatingSkipButton}
+                onPress={() => {
+                  if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setTimeLeft(0);
+                }}
+                activeOpacity={0.7}
+              >
+                <SkipForward size={24} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      </View>
+      ) : (
+        <>
+          {/* Video / Camera Section */}
+          <View style={styles.videoContainer}>
+            {player ? (
+              <VideoView 
+                style={styles.video} 
+                player={player}
+                allowsPictureInPicture={false} 
+                contentFit="cover"
+                nativeControls={false}
+              />
+            ) : (
+              <ActivityIndicator color={COLORS.brand.orange} size="large" />
+            )}
+
+            {/* Floating Toggle Camera/Video Button */}
+            <TouchableOpacity 
+              style={[styles.cameraToggleButton, isCameraMode && styles.cameraToggleButtonActive]}
+              onPress={() => {
+                if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsCameraMode(!isCameraMode);
+              }}
+            >
+              <CameraIcon size={20} color={isCameraMode ? COLORS.brand.orange : "#fff"} />
+            </TouchableOpacity>
+
+            {/* Floating Music Button */}
+            <TouchableOpacity 
+              style={styles.musicButton}
+              onPress={() => {
+                if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsPaused(true);
+                setMusicModalVisible(true);
+              }}
+            >
+              <Music size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Info Section */}
+          <View style={styles.infoContainer}>
+            {/* Floating Masterclass '?' Button */}
+            <TouchableOpacity 
+              style={styles.masterclassButton}
+              onPress={() => {
+                if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsPaused(true);
+                setMasterclassVisible(true);
+              }}
+            >
+              <Text style={styles.masterclassButtonText}>?</Text>
+            </TouchableOpacity>
+
+            {/* Sleeping Fox Warning - Placed at the top so it never blocks buttons */}
+            {isPaused && pauseTimer > 10 && (
+              <Animated.View entering={FadeIn} style={styles.sleepingFoxContainer}>
+                <View style={{ marginBottom: 6 }}>
+                  <Moon size={32} color={COLORS.brand.yellow} />
+                </View>
+                <Text style={styles.sleepingFoxText}>Blaze is asleep!</Text>
+              </Animated.View>
+            )}
+
+            <Text style={styles.exerciseName}>{currentExercise.name}</Text>
+            
+            {/* Progressive Overload: Beat your record banner */}
+            {(() => {
+              if (currentExercise.id === 'rest' || currentExercise.name.toLowerCase() === 'rest') return null;
+              const pr = getPersonalRecord(toExerciseId(currentExercise.name));
+              if (!pr) return null;
+              const isRecord = newRecordExercise === currentExercise.name;
+              if (isRecord) {
+                return (
+                  <Animated.View entering={FadeIn} style={[styles.newRecordBanner, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}>
+                    <Trophy size={16} color={COLORS.bg.primary} />
+                    <Text style={styles.newRecordText}>NEW RECORD!</Text>
+                  </Animated.View>
+                );
+              }
+              return (
+                <View style={styles.lastTimeBanner}>
+                  <Text style={styles.lastTimeText}>
+                    Last: {pr.lastDurationSecs}s • Best: {pr.bestDurationSecs}s
+                  </Text>
+                </View>
+              );
+            })()}
+            
+            <CircularTimer
+              size={140}
+              strokeWidth={6}
+              timeLeft={timeLeft}
+              totalTime={workoutState === 'prepare' ? 5 : exercises[currentIndex]?.duration || 30}
+              isPaused={isPaused}
+              color={workoutState === 'prepare' ? COLORS.brand.gold : COLORS.brand.orange}
+            />
+
+            {/* Dynamic Masterclass Tips or Prepare Text */}
+            {workoutState === 'prepare' ? (
+              <Animated.View entering={FadeIn} exiting={FadeOut}>
+                <Text style={[styles.tipText, { color: COLORS.brand.yellow, fontSize: FONT_SIZE.lg }]}>
+                  Get in position! Starting soon...
+                </Text>
+              </Animated.View>
+            ) : (
+              <Animated.View 
+                key={tipIndex} 
+                entering={SlideInRight} 
+                exiting={FadeOut}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 40, paddingHorizontal: SPACING.lg }}
+              >
+                <Lightbulb size={18} color={COLORS.brand.yellow} />
+                <Text style={[styles.tipText, { minHeight: undefined, paddingHorizontal: 0, flex: 1, textAlign: 'left' }]}>
+                  {currentExercise.tips[tipIndex]}
+                </Text>
+              </Animated.View>
+            )}
+
+            {/* Progress Dots */}
+            <View style={styles.progressContainer}>
+              {exercises.map((ex, idx) => (
+                <View 
+                  key={ex.uniqueKey || `dot_${idx}_${ex.id}`} 
+                  style={[
+                    styles.dot, 
+                    idx === currentIndex ? styles.dotActive : idx < currentIndex ? styles.dotCompleted : null
+                  ]} 
+                />
+              ))}
+            </View>
+            
+            {/* Play / Pause Toggle without background */}
+            <View style={styles.activeActionsRow}>
+              <TouchableOpacity 
+                style={styles.pauseButtonContainer}
+                onPress={() => {
+                  if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setIsPaused(!isPaused);
+                }}
+                activeOpacity={0.7}
+              >
+                {isPaused ? (
+                  <Play size={56} color={COLORS.brand.orange} fill={COLORS.brand.orange} />
+                ) : (
+                  <Pause size={56} color={COLORS.brand.orange} fill={COLORS.brand.orange} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.finishEarlyButton}
+                onPress={() => {
+                  if (sfxEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setTimeLeft(0);
+                }}
+                activeOpacity={0.7}
+              >
+                <SkipForward size={36} color={COLORS.text.secondary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </>
+      )}
 
       {/* ==========================================
           MASTERCLASS MODAL
@@ -1772,6 +2141,20 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.md,
     fontFamily: 'Inter_500Medium',
   },
+  saveCustomButton: {
+    backgroundColor: COLORS.bg.tertiary,
+    borderWidth: 1.5,
+    borderColor: COLORS.brand.orange,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    alignItems: 'center',
+    width: '100%',
+  },
+  saveCustomButtonText: {
+    color: COLORS.brand.orange,
+    fontSize: FONT_SIZE.md,
+    fontFamily: 'Inter_700Bold',
+  },
 
   // Active Buttons Row
   activeActionsRow: {
@@ -1939,5 +2322,210 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: FONT_SIZE.lg,
     fontFamily: 'Inter_700Bold',
+  },
+  cameraToggleButtonActive: {
+    borderColor: COLORS.brand.orange,
+    backgroundColor: 'rgba(255, 107, 53, 0.15)',
+  },
+  fullScreenCameraContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000',
+  },
+  floatingHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 64,
+    paddingHorizontal: SPACING.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    zIndex: 10,
+  },
+  floatingHeaderRight: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  floatingIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(5, 5, 10, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  floatingIconButtonActive: {
+    borderColor: COLORS.brand.orange,
+    backgroundColor: 'rgba(255, 107, 53, 0.15)',
+  },
+  floatingTextShadow: {
+    textShadowColor: 'rgba(0, 0, 0, 0.85)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  progressText: {
+    fontSize: FONT_SIZE.sm,
+    fontFamily: 'Inter_600SemiBold',
+    color: COLORS.text.secondary,
+    marginTop: 2,
+  },
+  floatingSleepingFox: {
+    position: 'absolute',
+    top: '35%',
+    alignSelf: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(5, 5, 10, 0.85)',
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1.5,
+    borderColor: COLORS.brand.yellow,
+    zIndex: 30,
+    ...CARD_SHADOW,
+  },
+  floatingHUDColumn: {
+    position: 'absolute',
+    top: 180,
+    left: SPACING.lg,
+    alignItems: 'center',
+    gap: SPACING.md,
+    zIndex: 10,
+  },
+  floatingRepCard: {
+    backgroundColor: 'rgba(5, 5, 10, 0.75)',
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 107, 53, 0.4)',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    alignItems: 'center',
+    minWidth: 90,
+    ...CARD_SHADOW,
+  },
+  floatingRepLabel: {
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  floatingRepValue: {
+    fontSize: 28,
+    fontFamily: 'Inter_700Bold',
+    color: COLORS.brand.orange,
+  },
+  floatingBottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: 40,
+    paddingHorizontal: SPACING.lg,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  floatingTipBox: {
+    backgroundColor: 'rgba(16, 16, 24, 0.8)',
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 179, 71, 0.3)',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    alignItems: 'flex-start',
+    maxWidth: '90%',
+    marginBottom: SPACING.md,
+    ...CARD_SHADOW,
+  },
+  floatingTipText: {
+    fontSize: FONT_SIZE.sm,
+    fontFamily: 'Inter_500Medium',
+    color: COLORS.text.primary,
+    flex: 1,
+    lineHeight: 18,
+  },
+  floatingControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.lg,
+    marginTop: SPACING.sm,
+  },
+  floatingPlayPauseButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: COLORS.brand.orange,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...CARD_SHADOW,
+  },
+  floatingSkipButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  floorSetupGuideContainer: {
+    position: 'absolute',
+    top: '25%',
+    left: 24,
+    right: 24,
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1.5,
+    borderColor: COLORS.brand.orange,
+    padding: SPACING.lg,
+    zIndex: 100,
+    ...CARD_SHADOW,
+  },
+  floorSetupHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.15)',
+    paddingBottom: SPACING.xs,
+  },
+  floorSetupHeaderText: {
+    color: COLORS.brand.orange,
+    fontSize: FONT_SIZE.md,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 0.5,
+  },
+  floorSetupStepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginVertical: SPACING.xs + 2,
+  },
+  floorSetupStepNumber: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: COLORS.brand.orange,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  floorSetupStepNumberText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+  },
+  floorSetupStepText: {
+    color: COLORS.text.secondary,
+    fontSize: FONT_SIZE.sm,
+    fontFamily: 'Inter_500Medium',
+    lineHeight: 18,
+    flex: 1,
   },
 });

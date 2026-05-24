@@ -30,4 +30,14 @@ export const EXERCISE_IMAGES: Record<string, any> = {
   '13': require('../assets/images/exercises/mountain_climbers.jpg'),
   '14': require('../assets/images/exercises/pike_pushup.jpg'),
   '15': require('../assets/images/exercises/superman_raises.jpg'),
+  '16': require('../assets/images/exercises/Dead_Bug.jpg'),
+  '17': require('../assets/images/exercises/High_Knees.jpg'),
+  '18': require('../assets/images/exercises/Russian_Twists.jpg'),
+  '19': require('../assets/images/exercises/Decline_Pushups.jpg'),
+  '20': require('../assets/images/exercises/Diamond_PushUps.jpg'),
+  '21': require('../assets/images/exercises/Inverted_Rows.jpg'),
+  '22': require('../assets/images/exercises/SingleLeg_Glute_Bridge.jpg'),
+  '23': require('../assets/images/exercises/SingleLeg_Romanian_Deadlift.jpg'),
+  '24': require('../assets/images/exercises/SingleLeg_Squats.jpg'),
 };
+

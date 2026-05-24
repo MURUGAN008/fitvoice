@@ -40,8 +40,8 @@ class VoiceCoach {
     this.setSpeakingState(false);
   }
 
-  /** Internal helper to speak a phrase if enabled */
-  private speak(text: string, forceStop: boolean = true) {
+  /** Speak a phrase if enabled */
+  public speak(text: string, forceStop: boolean = true) {
     if (!this.enabled) return;
     
     // Default behavior is to interrupt previous speech for time-sensitive workout cues

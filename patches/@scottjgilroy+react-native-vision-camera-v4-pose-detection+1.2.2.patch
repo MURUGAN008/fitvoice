@@ -1,13 +1,39 @@
 diff --git a/node_modules/@scottjgilroy/react-native-vision-camera-v4-pose-detection/android/src/main/java/com/visioncamerav3posedetection/VisionCameraV3PoseDetectionModule.kt b/node_modules/@scottjgilroy/react-native-vision-camera-v4-pose-detection/android/src/main/java/com/visioncamerav3posedetection/VisionCameraV3PoseDetectionModule.kt
-index 89f218d..4c1ceb5 100644
+index 89f218d..0e0a1ae 100644
 --- a/node_modules/@scottjgilroy/react-native-vision-camera-v4-pose-detection/android/src/main/java/com/visioncamerav3posedetection/VisionCameraV3PoseDetectionModule.kt
 +++ b/node_modules/@scottjgilroy/react-native-vision-camera-v4-pose-detection/android/src/main/java/com/visioncamerav3posedetection/VisionCameraV3PoseDetectionModule.kt
-@@ -18,7 +18,7 @@ import java.util.HashMap
+@@ -18,14 +18,18 @@ import java.util.HashMap
  
  class VisionCameraV3PoseDetectionModule(proxy : VisionCameraProxy, options: Map<String, Any>?): FrameProcessorPlugin() {
  
 -  override fun callback(frame: Frame, arguments: Map<String, Any>?): HashMap<String, Any> {
++  private var poseDetector: com.google.mlkit.vision.pose.PoseDetector? = null
++
 +  override fun callback(frame: Frame, arguments: Map<String, Any>?): HashMap<String, Any?> {
      try {
-       val options = PoseDetectorOptions.Builder()
-       if (arguments?.get("mode") === "stream") options.setDetectorMode(PoseDetectorOptions.STREAM_MODE)
+-      val options = PoseDetectorOptions.Builder()
+-      if (arguments?.get("mode") === "stream") options.setDetectorMode(PoseDetectorOptions.STREAM_MODE)
+-      else if (arguments?.get("mode") === "single") options.setDetectorMode(PoseDetectorOptions.SINGLE_IMAGE_MODE)
+-      if (arguments?.get("performanceMode") === "min") options.setPreferredHardwareConfigs(PoseDetectorOptions.CPU)
+-      else if (arguments?.get("performanceMode") === "max") options.setPreferredHardwareConfigs(PoseDetectorOptions.CPU_GPU)
+-      val poseDetector = PoseDetection.getClient(options.build())
++      if (poseDetector == null) {
++        val optionsBuilder = PoseDetectorOptions.Builder()
++        if (arguments?.get("mode") == "stream") optionsBuilder.setDetectorMode(PoseDetectorOptions.STREAM_MODE)
++        else if (arguments?.get("mode") == "single") optionsBuilder.setDetectorMode(PoseDetectorOptions.SINGLE_IMAGE_MODE)
++        if (arguments?.get("performanceMode") == "min") optionsBuilder.setPreferredHardwareConfigs(PoseDetectorOptions.CPU)
++        else if (arguments?.get("performanceMode") == "max") optionsBuilder.setPreferredHardwareConfigs(PoseDetectorOptions.CPU_GPU)
++        poseDetector = PoseDetection.getClient(optionsBuilder.build())
++      }
+       val mediaImage: Image = frame.image
+       val orientation: Orientation = frame.orientation
+       val surfaceRotation = orientation.toSurfaceRotation()
+@@ -43,7 +47,7 @@ class VisionCameraV3PoseDetectionModule(proxy : VisionCameraProxy, options: Map<
+         mediaImage, 
+         surfaceRotationToDegrees( surfaceRotation )
+       )
+-      val task: Task<Pose> = poseDetector.process(image)
++      val task: Task<Pose> = poseDetector!!.process(image)
+       val pose: Pose = Tasks.await(task)
+       val map = WritableNativeMap()
+       fun addLandmarkToMap(landmark: PoseLandmark?, landmarkName: String) {

@@ -42,7 +42,8 @@ export default function HomeScreen() {
     workoutHistory, 
     workoutSchedule,
     registerPushToken,
-    checkIncomingNudges
+    checkIncomingNudges,
+    savedCustomWorkouts
   } = useUserStore();
 
   const [incomingNudgeSender, setIncomingNudgeSender] = React.useState<string | null>(null);
@@ -345,7 +346,17 @@ export default function HomeScreen() {
             lower_body: { name: 'Lower Body', icon: Activity, duration: '15 min', desc: 'Legs & glutes power', color: '#60A5FA' },
           };
           
-          const meta = presetMeta[todayPreset as keyof typeof presetMeta] || presetMeta.full_body;
+          const customPlan = savedCustomWorkouts.find(w => w.id === todayPreset);
+          const meta = customPlan 
+            ? { 
+                name: customPlan.name, 
+                icon: Dumbbell, 
+                duration: `${Math.ceil((customPlan.exercises.reduce((acc, curr) => acc + curr.duration, 0)) / 60)} min`, 
+                desc: `${customPlan.exercises.length} customized exercises`, 
+                color: COLORS.brand.yellow 
+              }
+            : (presetMeta[todayPreset as keyof typeof presetMeta] || presetMeta.full_body);
+
           const alreadyWorkedOut = petStats.lastWorkoutDate && new Date(petStats.lastWorkoutDate).toDateString() === new Date().toDateString();
           
           return (
@@ -370,7 +381,13 @@ export default function HomeScreen() {
                 {!alreadyWorkedOut && (
                   <AnimatedCard 
                     style={[styles.missionStartButton, { backgroundColor: meta.color }]}
-                    onPress={() => router.push({ pathname: '/workout', params: { preset: todayPreset } })}
+                    onPress={() => {
+                      if (customPlan) {
+                        router.push({ pathname: '/workout', params: { custom_plan_id: todayPreset } });
+                      } else {
+                        router.push({ pathname: '/workout', params: { preset: todayPreset } });
+                      }
+                    }}
                   >
                     <Text style={styles.missionStartText}>GO</Text>
                   </AnimatedCard>
