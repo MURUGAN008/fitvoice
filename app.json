@@ -57,7 +57,14 @@
           "color": "#FF6B35"
         }
       ],
-      "expo-video"
+      "expo-video",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Blaze to access the microphone for hands-free workout voice commands.",
+          "speechRecognitionPermission": "Allow Blaze to transcribe your voice commands (like 'pause', 'resume') during workouts."
+        }
+      ]
     ],
     "extra": {
       "router": {},

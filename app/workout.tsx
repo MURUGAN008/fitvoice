@@ -41,6 +41,7 @@ import { useUserStore } from '../store/userStore';
 import CircularTimer from '../components/CircularTimer';
 import PetAvatar from '../components/PetAvatar';
 import PoseDetectionCamera from '../components/PoseDetectionCamera';
+import { useVoiceCommands } from '../hooks/useVoiceCommands';
 import { Camera as CameraIcon } from 'lucide-react-native';
 import { EXERCISE_IMAGES } from '../constants/images';
 import StrokeText from '../components/StrokeText';
@@ -384,6 +385,54 @@ export default function WorkoutScreen() {
       setShowSetupGuide(false);
     }
   }, [currentIndex, workoutState, isCameraMode, currentExercise]);
+
+  // Voice Command Navigation Hook
+  useVoiceCommands({
+    isActive: isCameraMode && workoutState === 'active',
+    onPause: () => {
+      if (!isPaused) {
+        setIsPaused(true);
+        if (coachVoiceEnabled) {
+          voiceCoach.speak("Paused");
+        }
+      }
+    },
+    onResume: () => {
+      if (isPaused) {
+        setIsPaused(false);
+        if (coachVoiceEnabled) {
+          voiceCoach.speak("Resuming");
+        }
+      }
+    },
+    onNext: () => {
+      if (coachVoiceEnabled) {
+        voiceCoach.speak("Skipping exercise");
+      }
+      setTimeLeft(0);
+    },
+    onBack: () => {
+      if (currentIndex > 0) {
+        if (coachVoiceEnabled) {
+          voiceCoach.speak("Previous exercise");
+        }
+        setWorkoutState('prepare');
+        setCurrentIndex(currentIndex - 1);
+        setTimeLeft(5); // 5 seconds to prepare
+        setIsPaused(false);
+      } else {
+        if (coachVoiceEnabled) {
+          voiceCoach.speak("This is the first exercise");
+        }
+      }
+    },
+    onExit: () => {
+      if (coachVoiceEnabled) {
+        voiceCoach.speak("Exiting workout");
+      }
+      router.replace('/(tabs)');
+    },
+  });
   
   // Resolve local cached URI if available
   const [resolvedVideoUrl, setResolvedVideoUrl] = useState<string>('');
