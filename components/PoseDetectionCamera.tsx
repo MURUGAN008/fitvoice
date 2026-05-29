@@ -390,9 +390,10 @@ export default function PoseDetectionCamera({
           }
           if (smoothKneeAngle > 148) {
             repState.current = 'up';
-            triggerRepComplete();
-            if (!repFormValid.current) {
-              triggerFeedback("Good effort! Try to keep your back straighter next time");
+            if (repFormValid.current) {
+              triggerRepComplete();
+            } else {
+              triggerFeedback("Rep not counted. Focus on your posture");
             }
           }
         }
@@ -467,9 +468,10 @@ export default function PoseDetectionCamera({
           }
           if (smoothElbowAngle > 150) {
             repState.current = 'up';
-            triggerRepComplete();
-            if (!repFormValid.current) {
-              triggerFeedback("Nice rep! Keep your body straight next time");
+            if (repFormValid.current) {
+              triggerRepComplete();
+            } else {
+              triggerFeedback("Rep not counted. Squeeze your core");
             }
           }
         }
@@ -538,11 +540,22 @@ export default function PoseDetectionCamera({
         }
 
         // Rep counting (Jumping Jacks)
+        const currentFrameCorrect = !errors.torso && !errors.legs && !errors.arms;
         if (repState.current === 'up' && handsDown && isStanceNarrow) {
           repState.current = 'down';
-        } else if (repState.current === 'down' && handsUp && isStanceWide) {
-          repState.current = 'up';
-          triggerRepComplete();
+          repFormValid.current = currentFrameCorrect;
+        } else if (repState.current === 'down') {
+          if (!currentFrameCorrect) {
+            repFormValid.current = false;
+          }
+          if (handsUp && isStanceWide) {
+            repState.current = 'up';
+            if (repFormValid.current) {
+              triggerRepComplete();
+            } else {
+              triggerFeedback("Rep not counted. Raise hands fully");
+            }
+          }
         }
       }
     }
@@ -580,11 +593,22 @@ export default function PoseDetectionCamera({
         }
 
         // Rep counting (Glute Bridge)
+        const currentFrameCorrect = !errors.torso && !errors.legs && !errors.arms;
         if (repState.current === 'up' && hipAngle < 140) {
           repState.current = 'down';
-        } else if (repState.current === 'down' && hipAngle > 165) {
-          repState.current = 'up';
-          triggerRepComplete();
+          repFormValid.current = currentFrameCorrect;
+        } else if (repState.current === 'down') {
+          if (!currentFrameCorrect) {
+            repFormValid.current = false;
+          }
+          if (hipAngle > 165) {
+            repState.current = 'up';
+            if (repFormValid.current) {
+              triggerRepComplete();
+            } else {
+              triggerFeedback("Rep not counted. Lift hips higher");
+            }
+          }
         }
       }
     }
@@ -621,11 +645,22 @@ export default function PoseDetectionCamera({
         }
 
         // Rep counting (Crunches)
+        const currentFrameCorrect = !errors.torso && !errors.legs && !errors.arms;
         if (repState.current === 'up' && hipAngle < 100) {
           repState.current = 'down';
-        } else if (repState.current === 'down' && hipAngle > 140) {
-          repState.current = 'up';
-          triggerRepComplete();
+          repFormValid.current = currentFrameCorrect;
+        } else if (repState.current === 'down') {
+          if (!currentFrameCorrect) {
+            repFormValid.current = false;
+          }
+          if (hipAngle > 140) {
+            repState.current = 'up';
+            if (repFormValid.current) {
+              triggerRepComplete();
+            } else {
+              triggerFeedback("Rep not counted. Squeeze your core");
+            }
+          }
         }
       }
     }
@@ -658,11 +693,22 @@ export default function PoseDetectionCamera({
         }
 
         // Rep counting (Mountain Climbers)
+        const currentFrameCorrect = !errors.torso && !errors.legs && !errors.arms;
         if (repState.current === 'up' && minKneeAngle < 105) {
           repState.current = 'down';
-        } else if (repState.current === 'down' && minKneeAngle > 145) {
-          repState.current = 'up';
-          triggerRepComplete();
+          repFormValid.current = currentFrameCorrect;
+        } else if (repState.current === 'down') {
+          if (!currentFrameCorrect) {
+            repFormValid.current = false;
+          }
+          if (minKneeAngle > 145) {
+            repState.current = 'up';
+            if (repFormValid.current) {
+              triggerRepComplete();
+            } else {
+              triggerFeedback("Rep not counted. Keep hips low");
+            }
+          }
         }
       }
     }
@@ -728,7 +774,11 @@ export default function PoseDetectionCamera({
           }
           if (maxHipAngle < 110) {
             repState.current = 'up';
-            triggerRepComplete();
+            if (repFormValid.current) {
+              triggerRepComplete();
+            } else {
+              triggerFeedback("Rep not counted. Squeeze your core");
+            }
           }
         }
       }
@@ -768,7 +818,11 @@ export default function PoseDetectionCamera({
           }
           if (minHipAngle > 150) {
             repState.current = 'up';
-            triggerRepComplete();
+            if (repFormValid.current) {
+              triggerRepComplete();
+            } else {
+              triggerFeedback("Rep not counted. Lift knees higher");
+            }
           }
         }
       }
@@ -814,11 +868,22 @@ export default function PoseDetectionCamera({
           // Projection along the hip horizontal vector
           const projection = (wristVec.x * hipVec.x + wristVec.y * hipVec.y) / hipWidthSq;
 
+          const currentFrameCorrect = !errors.torso && !errors.legs && !errors.arms;
           if (repState.current === 'up' && projection < -0.5) {
             repState.current = 'down';
-          } else if (repState.current === 'down' && projection > 0.5) {
-            repState.current = 'up';
-            triggerRepComplete();
+            repFormValid.current = currentFrameCorrect;
+          } else if (repState.current === 'down') {
+            if (!currentFrameCorrect) {
+              repFormValid.current = false;
+            }
+            if (projection > 0.5) {
+              repState.current = 'up';
+              if (repFormValid.current) {
+                triggerRepComplete();
+              } else {
+                triggerFeedback("Rep not counted. Keep back straight");
+              }
+            }
           }
         }
       }
@@ -861,7 +926,11 @@ export default function PoseDetectionCamera({
           if (!currentFrameCorrect) repFormValid.current = false;
           if (elbowAngle > 150) {
             repState.current = 'up';
-            triggerRepComplete();
+            if (repFormValid.current) {
+              triggerRepComplete();
+            } else {
+              triggerFeedback("Rep not counted. Squeeze back muscles");
+            }
           }
         }
       }
@@ -911,7 +980,11 @@ export default function PoseDetectionCamera({
           if (!currentFrameCorrect) repFormValid.current = false;
           if (hipAngle > 160) {
             repState.current = 'up';
-            triggerRepComplete();
+            if (repFormValid.current) {
+              triggerRepComplete();
+            } else {
+              triggerFeedback("Rep not counted. Keep back straight");
+            }
           }
         }
       }

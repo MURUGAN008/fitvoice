@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image, TextInput, Modal, AppState } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeIn, FadeOut, SlideInRight } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
+import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   GripVertical,
@@ -388,7 +388,7 @@ export default function WorkoutScreen() {
 
   // Voice Command Navigation Hook
   useVoiceCommands({
-    isActive: isCameraMode && workoutState === 'active',
+    isActive: workoutState === 'active' || workoutState === 'rest' || workoutState === 'prepare',
     onPause: () => {
       if (!isPaused) {
         setIsPaused(true);
@@ -456,35 +456,83 @@ export default function WorkoutScreen() {
     }
   }, [exercises, workoutState, supabaseUrl]);
 
-  // Initialize the video player
-  const player = useVideoPlayer(resolvedVideoUrl, player => {
-    player.loop = true;
-    if ((workoutState === 'active' || workoutState === 'prepare') && !isPaused) {
-      player.play();
-    } else {
-      player.pause();
-    }
+  // Initialize the video player with a stable null source
+  const player = useVideoPlayer(null, playerInstance => {
+    playerInstance.loop = true;
   });
+
+  // Handle async video source changes to prevent main UI thread freezes
+  useEffect(() => {
+    if (player) {
+      if (resolvedVideoUrl) {
+        console.log('[Workout Video] Loading source asynchronously:', resolvedVideoUrl);
+        player.replaceAsync(resolvedVideoUrl)
+          .then(() => {
+            // After successful replacement, sync the play/pause state
+            try {
+              if ((workoutState === 'active' || workoutState === 'prepare') && !isPaused) {
+                player.play();
+              } else {
+                player.pause();
+              }
+            } catch (err) {
+              console.warn('[VideoPlayer] Play/Pause after replacement failed:', err);
+            }
+          })
+          .catch(err => {
+            console.error('[Workout Video] Error loading source asynchronously:', err);
+          });
+      } else {
+        // Clear player source if no video URL is resolved (e.g. rest block)
+        player.replaceAsync(null).catch(err => {
+          console.error('[Workout Video] Error clearing player source:', err);
+        });
+      }
+    }
+  }, [resolvedVideoUrl, player]);
 
   // Handle Play/Pause syncing with video player and audio
   useEffect(() => {
     if (player) {
-      if ((workoutState === 'active' || workoutState === 'prepare') && !isPaused) {
-        player.play();
-      } else {
-        player.pause();
+      try {
+        if ((workoutState === 'active' || workoutState === 'prepare') && !isPaused) {
+          player.play();
+        } else {
+          player.pause();
+        }
+      } catch (e) {
+        console.warn('[VideoPlayer] Play/Pause failed:', e);
       }
     }
     
     // Sync background music playback
     if (soundObject) {
       if ((workoutState === 'active' || workoutState === 'prepare' || workoutState === 'rest') && !isPaused && musicEnabled) {
-        soundObject.playAsync();
+        soundObject.playAsync().catch(e => console.warn('[Audio] playAsync failed:', e));
       } else {
-        soundObject.pauseAsync();
+        soundObject.pauseAsync().catch(e => console.warn('[Audio] pauseAsync failed:', e));
       }
     }
   }, [isPaused, workoutState, player, soundObject, musicEnabled]);
+
+  // Resume video playback when app returns to foreground from transient background transitions
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active' && player) {
+        try {
+          if ((workoutState === 'active' || workoutState === 'prepare') && !isPaused) {
+            console.log('[Workout Video] App returned to active, resuming playback');
+            player.play();
+          }
+        } catch (e) {
+          console.warn('[VideoPlayer] Resume on active AppState failed:', e);
+        }
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [player, workoutState, isPaused]);
 
   // Handle Music Loading
   useEffect(() => {
@@ -500,7 +548,13 @@ export default function WorkoutScreen() {
         if (!track) return;
         
         // Ensure Audio is configured for playback even on silent mode (iOS)
-        await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+        await Audio.setAudioModeAsync({ 
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: true,
+          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+          interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+        });
 
         const source = track.isLocal 
           ? require('../assets/audio/default.mp3') 
@@ -522,7 +576,7 @@ export default function WorkoutScreen() {
 
     return () => {
       if (currentSound) {
-        currentSound.unloadAsync();
+        currentSound.unloadAsync().catch(e => console.warn('[Audio] unloadAsync cleanup failed:', e));
       }
     };
   }, [activeTrackId]); // Re-run only when track changes
@@ -720,6 +774,7 @@ export default function WorkoutScreen() {
     setTimeLeft(5);
     setTipIndex(0);
     setWorkoutState('prepare');
+    setIsPaused(false); // Make sure the workout starts in an unpaused state
   };
 
   const handleSaveAsCustom = (name: string) => {

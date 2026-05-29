@@ -5,7 +5,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path, Circle, Ellipse } from 'react-native-svg';
-import LottieView from 'lottie-react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,18 +20,12 @@ import { Star, Flame, Award, Trophy, Sparkles } from 'lucide-react-native';
 
 export type PetMoodState = 'idle' | 'happy' | 'tired' | 'sleeping' | 'eating';
 
-const LOTTIE_FILES = {
-  idle: require('../assets/lottie/fox/fox_idle.json'),
-  happy: require('../assets/lottie/fox/fox_happy.json'),
-  sleeping: require('../assets/lottie/fox/fox_sleeping.json'),
-};
-
-const LOTTIE_FOR_MOOD: Record<PetMoodState, any> = {
-  idle: LOTTIE_FILES.idle,
-  happy: LOTTIE_FILES.happy,
-  tired: LOTTIE_FILES.idle,
-  sleeping: LOTTIE_FILES.sleeping,
-  eating: LOTTIE_FILES.happy,
+const MASCOT_IMAGES: Record<PetMoodState, any> = {
+  idle: require('../assets/images/blaze_idle.png'),
+  happy: require('../assets/images/blaze_victory.png'),
+  sleeping: require('../assets/images/blaze_sleep.png'),
+  tired: require('../assets/images/blaze_workout.png'),
+  eating: require('../assets/images/blaze_hi.png'),
 };
 
 // Evolution stages define scale factor and badges
@@ -77,16 +70,168 @@ export default function PetAvatar({
   const { petStats } = useUserStore();
   const activeAccessory = propAccessory !== undefined ? propAccessory : petStats.activeAccessory;
 
-  const lottieSource = LOTTIE_FOR_MOOD[mood];
+  const mascotSource = MASCOT_IMAGES[mood] || MASCOT_IMAGES.idle;
   const evoStage = getEvolutionStage(level);
   const evo = EVOLUTION_STAGES[evoStage] || EVOLUTION_STAGES[1];
 
-  const speed = mood === 'tired' ? 0.5
-    : mood === 'happy' ? 1.3
-    : mood === 'sleeping' ? 0.7
-    : 1;
+  const mascotSize = size * 0.85 * evo.scaleBoost;
 
-  const lottieSize = size * 0.85 * evo.scaleBoost;
+  // Reanimated shared values for physics-based mascot micro-animations
+  const yOffset = useSharedValue(0);
+  const scaleX = useSharedValue(1);
+  const scaleY = useSharedValue(1);
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    // Reset values first
+    yOffset.value = 0;
+    scaleX.value = 1;
+    scaleY.value = 1;
+    rotation.value = 0;
+
+    if (mood === 'sleeping') {
+      // Slow, deep breathing scale pulse
+      yOffset.value = withRepeat(
+        withTiming(2, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      scaleY.value = withRepeat(
+        withTiming(1.04, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      scaleX.value = withRepeat(
+        withTiming(0.97, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+    } else if (mood === 'happy') {
+      // Joyful bouncing sequence with landing squash & stretch (no emoji!)
+      yOffset.value = withRepeat(
+        withSequence(
+          withTiming(0, { duration: 100 }),
+          withTiming(-22, { duration: 300, easing: Easing.out(Easing.quad) }),
+          withTiming(0, { duration: 250, easing: Easing.in(Easing.quad) }),
+          withTiming(0, { duration: 150 })
+        ),
+        -1,
+        false
+      );
+
+      scaleY.value = withRepeat(
+        withSequence(
+          withTiming(0.90, { duration: 100, easing: Easing.out(Easing.quad) }),
+          withTiming(1.10, { duration: 300, easing: Easing.out(Easing.quad) }),
+          withTiming(1.02, { duration: 250, easing: Easing.in(Easing.quad) }),
+          withTiming(0.88, { duration: 150, easing: Easing.out(Easing.quad) }),
+          withTiming(1.0, { duration: 50 })
+        ),
+        -1,
+        false
+      );
+
+      scaleX.value = withRepeat(
+        withSequence(
+          withTiming(1.10, { duration: 100, easing: Easing.out(Easing.quad) }),
+          withTiming(0.90, { duration: 300, easing: Easing.out(Easing.quad) }),
+          withTiming(0.98, { duration: 250, easing: Easing.in(Easing.quad) }),
+          withTiming(1.12, { duration: 150, easing: Easing.out(Easing.quad) }),
+          withTiming(1.0, { duration: 50 })
+        ),
+        -1,
+        false
+      );
+
+      rotation.value = withRepeat(
+        withSequence(
+          withTiming(0, { duration: 100 }),
+          withTiming(-4, { duration: 300, easing: Easing.out(Easing.quad) }),
+          withTiming(4, { duration: 250, easing: Easing.in(Easing.quad) }),
+          withTiming(0, { duration: 200 })
+        ),
+        -1,
+        false
+      );
+    } else if (mood === 'tired') {
+      // Sluggish slow float + slightly shrunken slumped posture
+      yOffset.value = withRepeat(
+        withTiming(3, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      scaleY.value = withRepeat(
+        withTiming(0.97, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      scaleX.value = withRepeat(
+        withTiming(1.02, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      rotation.value = withRepeat(
+        withTiming(3, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+    } else if (mood === 'eating') {
+      // Friendly greeting wave wobble
+      yOffset.value = withRepeat(
+        withTiming(-4, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      rotation.value = withRepeat(
+        withTiming(5, { duration: 400, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      scaleY.value = withRepeat(
+        withTiming(1.03, { duration: 500, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      scaleX.value = withRepeat(
+        withTiming(0.97, { duration: 500, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+    } else {
+      // Idle: gentle floating and breathing
+      yOffset.value = withRepeat(
+        withTiming(-6, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      scaleY.value = withRepeat(
+        withTiming(1.02, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      scaleX.value = withRepeat(
+        withTiming(0.99, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+      rotation.value = withRepeat(
+        withTiming(1.5, { duration: 2400, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+    }
+  }, [mood]);
+
+  const mascotAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateY: yOffset.value },
+        { scaleX: scaleX.value },
+        { scaleY: scaleY.value },
+        { rotate: `${rotation.value}deg` },
+      ],
+    };
+  });
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
@@ -116,13 +261,14 @@ export default function PetAvatar({
         </AnimatedAccessory>
       )}
 
-      {/* Lottie Fox */}
-      <LottieView
-        source={lottieSource}
-        autoPlay
-        loop
-        speed={speed}
-        style={{ width: lottieSize, height: lottieSize, zIndex: 5 }}
+      {/* Animated Mascot Image */}
+      <Animated.Image
+        source={mascotSource}
+        style={[
+          { width: mascotSize, height: mascotSize, zIndex: 5 },
+          mascotAnimatedStyle
+        ]}
+        resizeMode="contain"
       />
 
       {/* FOREGROUND ACCESSORIES (Crown, Scarf, Headband, Glasses) */}

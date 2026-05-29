@@ -3,6 +3,12 @@
 // ============================================
 // Uses expo-speech to announce workout phases,
 // exercises, and provide motivation via Groq.
+//
+// CRITICAL: On Android, TTS (expo-speech) and STT
+// (expo-speech-recognition) cannot share audio focus.
+// This module exposes lifecycle hooks so the voice
+// commands system can stop the recognizer BEFORE
+// TTS starts and restart AFTER TTS finishes.
 // ============================================
 
 import * as Speech from 'expo-speech';
@@ -10,14 +16,24 @@ import * as Speech from 'expo-speech';
 class VoiceCoach {
   private enabled: boolean = true;
   public isSpeaking: boolean = false;
+
+  // Audio ducking callback (lower music volume while speaking)
   public onSpeechStateChange?: (isSpeaking: boolean) => void;
+
+  // STT lifecycle hooks — set by useVoiceCommands
+  // Called BEFORE TTS starts to give STT time to stop
+  public onBeforeSpeak?: () => Promise<void> | void;
+  // Called AFTER TTS finishes to let STT restart
+  public onAfterSpeak?: () => void;
 
   // Configuration options for the coach voice
   private options: Speech.SpeechOptions = {
     language: 'en-US',
-    rate: 1.05, // slightly faster for energy
+    rate: 1.05,
     pitch: 1.0,
   };
+
+  private speakingTimeout: any = null;
 
   /** Toggle whether voice is enabled or muted */
   public setVoiceEnabled(enabled: boolean) {
@@ -36,26 +52,99 @@ class VoiceCoach {
 
   /** Stop any currently playing speech */
   public stop() {
-    Speech.stop();
+    try {
+      Speech.stop();
+    } catch (e) {
+      console.warn('[VoiceCoach] Speech.stop failed:', e);
+    }
+    if (this.speakingTimeout) {
+      clearTimeout(this.speakingTimeout);
+      this.speakingTimeout = null;
+    }
     this.setSpeakingState(false);
   }
 
-  /** Speak a phrase if enabled */
-  public speak(text: string, forceStop: boolean = true) {
+  private handleSpeechDone() {
+    if (this.speakingTimeout) {
+      clearTimeout(this.speakingTimeout);
+      this.speakingTimeout = null;
+    }
+    this.setSpeakingState(false);
+
+    // Notify STT to restart after TTS is completely done
+    if (this.onAfterSpeak) {
+      // Small delay to let Android fully release audio focus
+      setTimeout(() => {
+        if (this.onAfterSpeak) {
+          this.onAfterSpeak();
+        }
+      }, 300);
+    }
+  }
+
+  /** Speak a phrase if enabled.
+   *  This method coordinates with the STT system:
+   *  1. Calls onBeforeSpeak() to stop the recognizer
+   *  2. Waits a short delay for Android to release the mic
+   *  3. Plays TTS
+   *  4. On completion, calls onAfterSpeak() to restart the recognizer
+   */
+  public async speak(text: string, forceStop: boolean = true) {
     if (!this.enabled) return;
-    
-    // Default behavior is to interrupt previous speech for time-sensitive workout cues
+
+    // Step 1: Stop any previous speech
     if (forceStop) {
       this.stop();
     }
-    
+
+    // Step 2: Tell STT to stop BEFORE we start TTS
+    if (this.onBeforeSpeak) {
+      try {
+        await this.onBeforeSpeak();
+      } catch (e) {
+        console.warn('[VoiceCoach] onBeforeSpeak failed:', e);
+      }
+    }
+
     this.setSpeakingState(true);
-    Speech.speak(text, {
-      ...this.options,
-      onDone: () => this.setSpeakingState(false),
-      onStopped: () => this.setSpeakingState(false),
-      onError: () => this.setSpeakingState(false),
-    });
+
+    // Calculate safety timeout
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    const estimatedDurationMs = Math.max(2000, (wordCount * 400) + 1000);
+
+    if (this.speakingTimeout) {
+      clearTimeout(this.speakingTimeout);
+    }
+
+    this.speakingTimeout = setTimeout(() => {
+      if (this.isSpeaking) {
+        console.log('[VoiceCoach] Safety fallback triggered: resetting isSpeaking to false');
+        this.handleSpeechDone();
+      }
+      this.speakingTimeout = null;
+    }, estimatedDurationMs);
+
+    // Step 3: Small delay for Android to release mic before TTS
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    try {
+      Speech.speak(text, {
+        ...this.options,
+        onDone: () => {
+          this.handleSpeechDone();
+        },
+        onStopped: () => {
+          this.handleSpeechDone();
+        },
+        onError: (err) => {
+          console.warn('[VoiceCoach] Speech error callback:', err);
+          this.handleSpeechDone();
+        },
+      });
+    } catch (e) {
+      console.error('[VoiceCoach] Speech.speak invocation failed:', e);
+      this.handleSpeechDone();
+    }
   }
 
   // ==========================================
@@ -83,7 +172,7 @@ class VoiceCoach {
 
     const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
     console.log(`[VoiceCoach] Groq API Key present: ${!!apiKey}`);
-    
+
     if (apiKey) {
       try {
         console.log(`[VoiceCoach] Sending request to Groq for exercise: ${exerciseName}`);
@@ -103,7 +192,7 @@ class VoiceCoach {
             max_tokens: 30
           })
         });
-        
+
         const data = await response.json();
         console.log(`[VoiceCoach] Groq Response Status: ${response.status}`);
         console.log(`[VoiceCoach] Groq Response Data:`, JSON.stringify(data, null, 2));
@@ -118,7 +207,7 @@ class VoiceCoach {
       }
     }
 
-    this.speak(phrase, false); // false = don't interrupt if already speaking
+    this.speak(phrase, false);
   }
 
   /** Announce rest period and the upcoming exercise */

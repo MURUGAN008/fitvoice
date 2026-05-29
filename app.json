@@ -62,7 +62,15 @@
         "expo-speech-recognition",
         {
           "microphonePermission": "Allow Blaze to access the microphone for hands-free workout voice commands.",
-          "speechRecognitionPermission": "Allow Blaze to transcribe your voice commands (like 'pause', 'resume') during workouts."
+          "speechRecognitionPermission": "Allow Blaze to transcribe your voice commands (like 'pause', 'resume') during workouts.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox",
+            "com.google.android.as",
+            "com.samsung.android.bixby.agent",
+            "com.samsung.android.honeyboard",
+            "com.miui.voiceassist",
+            "com.xiaomi.mibrain.speech"
+          ]
         }
       ]
     ],

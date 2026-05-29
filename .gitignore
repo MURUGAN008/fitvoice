@@ -42,4 +42,4 @@ yarn-error.*
 
   # local env files
   .env*.local
-+ .env
+.env
